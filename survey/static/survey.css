@@ -1,0 +1,17 @@
+.survey_container {
+    width: 40%;
+    margin: 2em auto;
+}
+
+.admin_container {
+    width: 50%;
+    margin: 2em auto;
+}
+
+.error {
+    display: block;
+}
+
+input[type="radio"] {
+    margin: 0.5em;
+}
