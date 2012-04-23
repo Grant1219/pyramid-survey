@@ -9,6 +9,13 @@ from pyramid_mailer.message import Message
 
 from sqlalchemy.exc import DBAPIError
 
+from wtforms import (
+    Form,
+    validators,
+    )
+
+from wtforms.fields import RadioField
+
 from .models import (
     DBSession,
     Group,
@@ -20,12 +27,19 @@ from .models import (
     Answer,
     )
 
-from .forms import (
-    build_survey_form,
-    )
-
 @view_config (route_name = 'survey', renderer = 'survey:templates/survey.mako')
 def survey (request):
+    class SurveyForm (Form):
+        pass
+
+    def build_survey_form (survey, post_data):
+        form = SurveyForm
+
+        for q in survey.questions:
+            setattr (form, 'question_' + str (q.id), RadioField (q.text, [validators.Required ()], choices = [(c.id, c.text) for c in q.choices], coerce = int) )
+
+        return form (post_data)
+
     messages = []
     survey = None
     survey_form = None
