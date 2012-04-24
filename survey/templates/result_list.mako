@@ -4,7 +4,7 @@
 <script src="${request.static_url ('survey:static/js/jquery.tablesorter.min.js')}" type="text/javascript"></script>
 <script type="text/javascript">
 $(document).ready (function () {
-    $('#result_list').tablesorter ( { headers: { 5: { sorter: false } } } );
+    $('#result_list').tablesorter ( { headers: { 4: { sorter: false } } } );
 });
 </script>
 </%block>
