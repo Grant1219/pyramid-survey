@@ -21,24 +21,26 @@ $(document).ready (function () {
             </tr>
         </thead>
         <tbody>
-        % for s in surveys:
+        %for s in surveys:
             <tr>
             <td><a href="/admin/results/list/${s.id}">${s.title}</a></td>
             <td>${s.created_datetime}</td>
             <td>${s.open_datetime}</td>
             <td>${s.close_datetime}</td>
             <td>
-                % if not s.open_datetime:
+                %if not s.open_datetime:
                 <a class="button" href="/admin/survey/open/${s.id}">Open survey</a>
-                % elif not s.close_datetime:
+                %elif not s.close_datetime:
                 <a class="button" href="/admin/survey/close/${s.id}">Close survey</a>
-                % endif
+                %endif
+                %if s.open_datetime:
                 <a class="button" href="/admin/survey/export/users/${s.id}">Export users</a>
                 <a class="button" href="/admin/survey/export/results/${s.id}">Export results</a>
+                %endif
                 <a class="button negative" href="/admin/survey/delete/${s.id}" onclick="return confirm ('Are you sure you want to delete this survey and all results?');">Delete survey</a>
             </td>
             </tr>
-        % endfor
+        %endfor
         </tbody>
     </table>
 </div>

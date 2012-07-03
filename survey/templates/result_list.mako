@@ -9,7 +9,7 @@ $(document).ready (function () {
 </script>
 </%block>
 <div class="admin_container">
-    % if results:
+    %if results:
     <h1>Result list</h1>
     <table id="result_list" class="tablesorter">
         <thead>
@@ -22,8 +22,8 @@ $(document).ready (function () {
             </tr>
         </thead>
         <tbody>
-        % for r in results:
-            % if r.submit_datetime:
+        %for r in results:
+            %if r.submit_datetime:
             <tr>
             <td>${r.user.first_name}</a></td>
             <td>${r.user.last_name}</td>
@@ -33,11 +33,11 @@ $(document).ready (function () {
                 <a class="button negative" href="/admin/result/delete/${r.id}" onclick="return confirm ('Are you sure you want to delete this user\'s response?');">Delete result</a>
             </td>
             </tr>
-            % endif
-        % endfor
+            %endif
+        %endfor
         </tbody>
     </table>
-    % else:
+    %else:
     <div class="error">The survey does not exist</div>
-    % endif
+    %endif
 </div>

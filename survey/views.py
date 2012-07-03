@@ -14,7 +14,10 @@ from wtforms import (
     validators,
     )
 
-from wtforms.fields import RadioField
+from wtforms.fields import (
+    RadioField,
+    TextAreaField,
+    )
 
 from .models import (
     DBSession,
@@ -24,7 +27,8 @@ from .models import (
     Question,
     Choice,
     Result,
-    Answer,
+    ChoiceAnswer,
+    TextAnswer,
     )
 
 @view_config (route_name = 'survey', renderer = 'survey:templates/survey.mako')
@@ -36,7 +40,10 @@ def survey (request):
         form = SurveyForm
 
         for q in survey.questions:
-            setattr (form, 'question_' + str (q.id), RadioField (q.text, [validators.Required ()], choices = [(c.id, c.text) for c in q.choices], coerce = int) )
+            if q.question_type == 'choice':
+                setattr (form, 'choice_question_' + str (q.id), RadioField (q.text, [validators.Required ()], choices = [(c.id, c.text) for c in q.choices], coerce = int) )
+            elif q.question_type == 'text':
+                setattr (form, 'text_question_' + str (q.id), TextAreaField (q.text, [validators.Required (), validators.Length (max = q.character_limit)]) )
 
         return form (post_data)
 
@@ -64,8 +71,10 @@ def survey (request):
                     if survey_form.validate ():
                         # save all the answers
                         for k, v in request.POST.iteritems ():
-                            if k.startswith ('question_'):
-                                mysql.add (Answer (v, k.replace ('question_', ''), result.id) )
+                            if k.startswith ('choice_question_'):
+                                mysql.add (ChoiceAnswer (v, k.replace ('choice_question_', ''), result.id) )
+                            elif k.startswith ('text_question_'):
+                                mysql.add (TextAnswer (v, k.replace ('text_question_', ''), result.id) )
 
                         survey = None
                         result.submit_datetime = datetime.now ()
@@ -198,7 +207,20 @@ def export_results (request):
         csv = ',,,'
         csv = csv + ','.join (q.text.replace (',', '') for q in survey.questions)
         csv = csv + '\r\n'
-        csv = csv + '\r\n'.join ( ('%s,%s,%s,%s' % (r.user.first_name, r.user.last_name, r.user.email, ','.join (a.choice.text.replace (',', '') for a in r.answers) ) ) for r in survey.results)
+
+        results = []
+        for r in survey.results:
+            responses = []
+            for a in r.answers:
+                if a.answer_type == 'choice':
+                    responses.append (a.choice.text.replace (',', '') )
+                elif a.answer_type == 'text':
+                    responses.append (a.response.replace (',', '') )
+
+            result = '%s,%s,%s,%s' % (r.user.first_name, r.user.last_name, r.user.email, ','.join (responses) )
+            results.append (result)
+
+        csv = csv + '\r\n'.join (results)
 
         title = survey.title.encode ('ascii', 'ignore').replace (' ', '_')
         title = title + '_results'

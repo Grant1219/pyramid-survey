@@ -5,6 +5,7 @@ from sqlalchemy import (
     Unicode,
     DateTime,
     ForeignKey,
+    Text,
     )
 
 from sqlalchemy.ext.declarative import declarative_base
@@ -33,9 +34,11 @@ survey_group_association = Table ('survey_group_association', Base.metadata,
     mysql_engine = 'InnoDB'
 )
 
-class User (Base):
-    __tablename__ = 'user'
+class InnoDB (object):
     __table_args__ = {'mysql_engine': 'InnoDB'}
+
+class User (Base, InnoDB):
+    __tablename__ = 'user'
 
     id = Column (Integer, primary_key = True)
     first_name = Column (Unicode (30) )
@@ -50,9 +53,8 @@ class User (Base):
         self.last_name = last_name
         self.email = email
 
-class Group (Base):
+class Group (Base, InnoDB):
     __tablename__ = 'group'
-    __table_args__ = {'mysql_engine': 'InnoDB'}
 
     id = Column (Integer, primary_key = True)
     name = Column (Unicode (30) )
@@ -60,9 +62,8 @@ class Group (Base):
     def __init__ (self, name):
         self.name = name
 
-class Survey (Base):
+class Survey (Base, InnoDB):
     __tablename__ = 'survey'
-    __table_args__ = {'mysql_engine': 'InnoDB'}
 
     id = Column (Integer, primary_key = True)
     title = Column (Unicode (50) )
@@ -80,37 +81,56 @@ class Survey (Base):
         self.open_datetime = open_datetime
         self.close_datetime = close_datetime
 
-class Question (Base):
+class Question (Base, InnoDB):
     __tablename__ = 'question'
-    __table_args__ = {'mysql_engine': 'InnoDB'}
 
     id = Column (Integer, primary_key = True)
     text = Column (Unicode (512) )
 
-    survey_id = Column (Integer, ForeignKey ('survey.id', ondelete = 'cascade') )
+    question_type = Column (Unicode (10) )
+    __mapper_args__ = {'polymorphic_on': question_type}
 
-    choices = relationship ('Choice', backref = 'question', passive_deletes = True)
+    survey_id = Column (Integer, ForeignKey ('survey.id', ondelete = 'cascade') )
 
     def __init__ (self, text, survey_id):
         self.text = text
         self.survey_id = survey_id
 
-class Choice (Base):
+class TextQuestion (Question):
+    __tablename__ = 'text_question'
+    __mapper_args__ = {'polymorphic_identity': 'text'}
+
+    id = Column (Integer, ForeignKey ('question.id'), primary_key = True)
+    character_limit = Column (Integer)
+
+    def __init__ (self, text, character_limit, survey_id):
+        super (TextQuestion, self).__init__ (text, survey_id)
+        self.character_limit = character_limit
+
+class ChoiceQuestion (Question):
+    __tablename__ = 'choice_question'
+    __mapper_args__ = {'polymorphic_identity': 'choice'}
+
+    id = Column (Integer, ForeignKey ('question.id'), primary_key = True)
+    choices = relationship ('Choice', backref = 'question', passive_deletes = True)
+
+    def __init__ (self, text, survey_id):
+        super (ChoiceQuestion, self).__init__ (text, survey_id)
+
+class Choice (Base, InnoDB):
     __tablename__ = 'choice'
-    __table_args__ = {'mysql_engine': 'InnoDB'}
 
     id = Column (Integer, primary_key = True)
     text = Column (Unicode (128) )
 
-    question_id = Column (Integer, ForeignKey ('question.id', ondelete = 'cascade') )
+    question_id = Column (Integer, ForeignKey ('choice_question.id', ondelete = 'cascade') )
 
     def __init__ (self, text, question_id):
         self.text = text
         self.question_id = question_id
 
-class Result (Base):
+class Result (Base, InnoDB):
     __tablename__ = 'result'
-    __table_args__ = {'mysql_engine': 'InnoDB'}
 
     id = Column (Integer, primary_key = True)
     token = Column (Unicode (10), unique = True)
@@ -127,22 +147,44 @@ class Result (Base):
         self.survey_id = survey_id
         self.user_id = user_id
 
-class Answer (Base):
+class Answer (Base, InnoDB):
     __tablename__ = 'answer'
-    __table_args__ = {'mysql_engine': 'InnoDB'}
 
     id = Column (Integer, primary_key = True)
 
-    choice_id = Column (Integer, ForeignKey ('choice.id', ondelete = 'cascade') )
     question_id = Column (Integer, ForeignKey ('question.id', ondelete = 'cascade') )
     result_id = Column (Integer, ForeignKey ('result.id', ondelete = 'cascade') )
+
+    answer_type = Column (Unicode (10) )
+    __mapper_args__ = {'polymorphic_on': answer_type}
+
+    def __init__ (self, question_id, result_id):
+        self.question_id = question_id
+        self.result_id = result_id
+
+class TextAnswer (Answer):
+    __tablename__ = 'text_answer'
+    __mapper_args__ = {'polymorphic_identity': 'text'}
+
+    id = Column (Integer, ForeignKey ('answer.id'), primary_key = True)
+    response = Column (Text)
+
+    def __init__ (self, response, question_id, result_id):
+        super (TextAnswer, self).__init__ (question_id, result_id)
+        self.response = response
+
+class ChoiceAnswer (Answer):
+    __tablename__ = 'choice_answer'
+    __mapper_args__ = {'polymorphic_identity': 'choice'}
+
+    id = Column (Integer, ForeignKey ('answer.id'), primary_key = True)
+    choice_id = Column (Integer, ForeignKey ('choice.id', ondelete = 'cascade') )
 
     choice = relationship ('Choice')
 
     def __init__ (self, choice_id, question_id, result_id):
+        super (ChoiceAnswer, self).__init__ (question_id, result_id)
         self.choice_id = choice_id
-        self.question_id = question_id
-        self.result_id = result_id
 
 def populate ():
     pass
