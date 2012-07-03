@@ -100,7 +100,7 @@ class TextQuestion (Question):
     __tablename__ = 'text_question'
     __mapper_args__ = {'polymorphic_identity': 'text'}
 
-    id = Column (Integer, ForeignKey ('question.id'), primary_key = True)
+    id = Column (Integer, ForeignKey ('question.id', ondelete = 'cascade'), primary_key = True)
     character_limit = Column (Integer)
 
     def __init__ (self, text, character_limit, survey_id):
@@ -111,7 +111,7 @@ class ChoiceQuestion (Question):
     __tablename__ = 'choice_question'
     __mapper_args__ = {'polymorphic_identity': 'choice'}
 
-    id = Column (Integer, ForeignKey ('question.id'), primary_key = True)
+    id = Column (Integer, ForeignKey ('question.id', ondelete = 'cascade'), primary_key = True)
     choices = relationship ('Choice', backref = 'question', passive_deletes = True)
 
     def __init__ (self, text, survey_id):
@@ -166,7 +166,7 @@ class TextAnswer (Answer):
     __tablename__ = 'text_answer'
     __mapper_args__ = {'polymorphic_identity': 'text'}
 
-    id = Column (Integer, ForeignKey ('answer.id'), primary_key = True)
+    id = Column (Integer, ForeignKey ('answer.id', ondelete = 'cascade'), primary_key = True)
     response = Column (Text)
 
     def __init__ (self, response, question_id, result_id):
@@ -177,7 +177,7 @@ class ChoiceAnswer (Answer):
     __tablename__ = 'choice_answer'
     __mapper_args__ = {'polymorphic_identity': 'choice'}
 
-    id = Column (Integer, ForeignKey ('answer.id'), primary_key = True)
+    id = Column (Integer, ForeignKey ('answer.id', ondelete = 'cascade'), primary_key = True)
     choice_id = Column (Integer, ForeignKey ('choice.id', ondelete = 'cascade') )
 
     choice = relationship ('Choice')
